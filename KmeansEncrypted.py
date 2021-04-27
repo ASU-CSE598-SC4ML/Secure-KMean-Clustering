@@ -88,11 +88,11 @@ def train_kmeans(enc_dataset,max_epoch, k):
                 x = x.add(data)
             if len(cluster['elements']) != 0:
                 x = x.div(len(cluster['elements']))
-                x = x.get_plain_text()              #this is done because division operation for floating number is not correct in crypten
-                a=int(x[0])                         # will be changed in future updated, so we are converting to int and then using same
-                b=int(x[1])                         # if diviison worked properly we would not need to decrypt plain value here
-                x= crypten.cryptensor([a,b])
-
+                x = x.get_plain_text()              #this is done because division operation is returning float to us but we want int value only and 
+                a=int(x[0])                         # no other purpose is there for converting to plain text , as we are converting to plain text than again to cryptensor only
+                b=int(x[1])                         # THis problem is due to this library , not my code, all our above computation is in int and we cannot have float here
+                x= crypten.cryptensor([a,b])        # In crypten 5. is computes differently than 5.00000 , preciison loss is there in crpyten , so it is not good for division operations.
+                                                    # but in K means division operation is required.
                 x=crypten.cryptensor(x)
                 cluster['coordinate'] = x
         #print_clusters(clusters,k)
