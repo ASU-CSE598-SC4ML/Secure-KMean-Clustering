@@ -7,11 +7,11 @@ import pandas as pd
 import torch
 from crypten.mpc import MPCTensor
 
-
 def kmeanspp(enc_dataset, K):
     clusters = [dict() for x in range(K)]
-    clusters[0]['coordinate'] = enc_dataset[0][0]
-    clusters[0]['elements'] = []
+
+    clusters[0]['coordinate'] = enc_dataset[152][0] # Take any random value , dont create random value inside this function
+    clusters[0]['elements'] = []                    # All parties will create diferent random value so this will cause issue in computation
 
     for k in range(1, K):
         distance_list = []
@@ -23,11 +23,8 @@ def kmeanspp(enc_dataset, K):
                 x = diff.sum()
                 minimum_centroid_distance.append(x)
             minimum_centroid_distance = MPCTensor.stack(minimum_centroid_distance)
-
             indices = minimum_centroid_distance.min()
-
             distance_list.append(indices)
-
         distance_list = MPCTensor.stack(distance_list)
         #print(distance_list.get_plain_text())
         maximum_distance_index = distance_list.argmax().reveal()
@@ -44,11 +41,11 @@ def kmeanspp(enc_dataset, K):
 
 def print_clusters(clusters, k):
     print("Intial cluster locations")
-    # for i in range(k):
-    #     print(clusters[i]['coordinate'].get_plain_text() ," ")
-    #     print(clusters[i]['coordinate'] ," ")
-    #
-    #     print("length of this cluseter"+ str(len(clusters[i]['elements'])))
+    for i in range(k):
+        print(clusters[i]['coordinate'].get_plain_text() ," ")
+        print(clusters[i]['coordinate'] ," ")
+    
+        print("length of this cluseter"+ str(len(clusters[i]['elements'])))
     clusters = decrypt_clusters(clusters,k)
     verify_clusters(clusters)
 
@@ -58,10 +55,10 @@ def train_kmeans(enc_dataset,max_epoch, k):
     # for x in range(k):
     #     clusters[x]['coordinate'] = enc_dataset[x][0]  # initiallize the clusters with random data points
     #     clusters[x]['elements'] = []
-    clusters = kmeanspp(enc_dataset, k)  # kmeans ++ initialization so that cluster are corectly formed
-    print_clusters(clusters, k)
+    clusters = kmeanspp(enc_dataset, k)  # kmeans  initialization so that cluster are corectly formed
+    print_clusters(clusters, k)         #Initial Cluster formed will be differnet in diffent algorithm runs  because of different random value
 
-    for iteration in range(max_epoch):  # around 100 epochs for convergence because
+    for iteration in range(max_epoch):  # around 10 epochs for convergence because
         for point_index in range(len(enc_dataset)):
             distance = []
             for index, cluster in enumerate(clusters):
@@ -82,20 +79,14 @@ def train_kmeans(enc_dataset,max_epoch, k):
             clusters[smallest_index]['elements'].append(enc_dataset[point_index][0])
             enc_dataset[point_index] = (enc_dataset[point_index][0], smallest_index)
         for cluster in clusters:
-            x = crypten.cryptensor([0.0, 0.0])
+            x = crypten.cryptensor([0, 0])
 
             for data in cluster['elements']:
                 x = x.add(data)
             if len(cluster['elements']) != 0:
                 x = x.div(len(cluster['elements']))
-                x = x.get_plain_text()              #this is done because division operation is returning float to us but we want int value only and 
-                a=int(x[0])                         # no other purpose is there for converting to plain text , as we are converting to plain text than again to cryptensor only
-                b=int(x[1])                         # THis problem is due to this library , not my code, all our above computation is in int and we cannot have float here
-                x= crypten.cryptensor([a,b])        # In crypten 5. is computes differently than 5.00000 , preciison loss is there in crpyten , so it is not good for division operations.
-                                                    # but in K means division operation is required.
-                x=crypten.cryptensor(x)
                 cluster['coordinate'] = x
-        #print_clusters(clusters,k)
+        print_clusters(clusters,k)
     return clusters
 
 
@@ -149,6 +140,7 @@ def run_mpc_kmeans(epochs=5, input_path=None, k=2, skip_plaintext=False):
     crypten.init()
     torch.manual_seed(1)
 
+
     dataset = pd.read_csv(input_path)
     X = dataset.iloc[:, [3, 4]].values
     dataset.describe()
@@ -181,4 +173,3 @@ def run_mpc_kmeans(epochs=5, input_path=None, k=2, skip_plaintext=False):
     logging.info("Printing  Clusters ")
     logging.info("==================")
     verify_clusters(decrypted_clusters)
-    #verify_clusters(clusters)
