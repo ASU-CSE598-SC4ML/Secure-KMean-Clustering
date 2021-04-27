@@ -15,7 +15,8 @@ class Kmeans:
         for k in range(1, K):
             D = np.array([])
             for x in X:
-                D = np.append(D, np.min(np.sum((x - Centroid_temp) ** 2)))
+                D = np.append(D, np.min(np.sum((x - Centroid_temp) ** 2,axis=1)))
+            index  = D.argmax()
             prob = D / np.sum(D)
             cummulative_prob = np.cumsum(prob)
             r = rd.random()
@@ -24,7 +25,7 @@ class Kmeans:
                 if r < p:
                     i = j
                     break
-            Centroid_temp = np.append(Centroid_temp, [X[i]], axis=0)
+            Centroid_temp = np.append(Centroid_temp, [X[index]], axis=0)
         return Centroid_temp.T
 
     def fit(self, n_iter):
@@ -57,6 +58,7 @@ class Kmeans:
             self.Output = Y
 
     def predict(self):
+        print(self.Centroids)
         return self.Output, self.Centroids.T
 
     def WCSS(self):
