@@ -20,7 +20,7 @@ parser.add_argument(
     help="The number of parties to launch. Each party acts as its own process",
 )
 parser.add_argument(
-    "--epochs", default=1, type=int, metavar="N", help="number of total epochs to run"
+    "--epochs", default=10, type=int, metavar="N", help="number of total epochs to run"
 )
 parser.add_argument(
     "--clusters", default=5, type=int, metavar="N", help="Number of cluster to segregate"
@@ -53,11 +53,9 @@ def _run_experiment(args):
         format="%(asctime)s - %(process)d - %(name)s - %(levelname)s - %(message)s",
     )
     from KmeansEncrypted import run_mpc_kmeans
-
     run_mpc_kmeans(
-        args.epochs, args.path, args.clusters, args.skip_plaintext, os.environ["RANK"]
+        args.epochs, args.path, args.clusters, args.skip_plaintext
     )
-
 
 def main(run_experiment):
     args = parser.parse_args()
