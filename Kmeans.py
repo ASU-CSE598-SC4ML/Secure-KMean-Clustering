@@ -10,7 +10,7 @@ class Kmeans:
         self.m = self.X.shape[0]
 
     def kmeanspp(self, X, K):
-        i = 0
+        i = rd.randint(1,199)
         Centroid_temp = np.array([X[i]])
         for k in range(1, K):
             D = np.array([])
